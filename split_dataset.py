@@ -43,5 +43,5 @@ def move_images():
     return 0
 
 
-print(split_dataset())
-print(move_images())
+# print(split_dataset())
+# print(move_images())
