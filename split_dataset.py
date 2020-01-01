@@ -5,12 +5,12 @@ from sklearn.model_selection import train_test_split
 
 
 def split_dataset():
-    df = pd.read_csv('./dataset/c_dataset/labels_v2.0.csv')  # 7:1.5:1.5
+    df = pd.read_csv('./dataset/c_dataset/labels_v2.1.csv')  # 7:1.5:1.5
     X_train, X_test = train_test_split(df, test_size=.3, random_state=1234, shuffle=True)
-    X_valid, X_test = train_test_split(X_test, test_size=.5, random_state=1234, shuffle=True)
+    # X_valid, X_test = train_test_split(X_test, test_size=.5, random_state=1234, shuffle=True)
 
     X_train.to_csv("./dataset/c_dataset/train.csv", mode='w', header=True, index=False)
-    X_valid.to_csv("./dataset/c_dataset/val.csv", mode='w', header=True, index=False)
+    # X_valid.to_csv("./dataset/c_dataset/val.csv", mode='w', header=True, index=False)
     X_test.to_csv("./dataset/c_dataset/test.csv", mode='w', header=True, index=False)
 
     return 0
@@ -18,7 +18,8 @@ def split_dataset():
 
 def move_images():
     res = os.listdir('./dataset/c_dataset/from_images/')
-    mode = ['train', 'val', 'test']
+    # mode = ['train', 'val', 'test']
+    mode = ['train', 'test']
     tar = './dataset/c_dataset/images/'
 
     for folder in mode:
@@ -43,5 +44,5 @@ def move_images():
     return 0
 
 
-# print(split_dataset())
-# print(move_images())
+print(split_dataset())
+print(move_images())
