@@ -18,21 +18,14 @@ import copy
 
 data_transforms = {
     'train': transforms.Compose([
-        transforms.RandomResizedCrop(224),
         transforms.Resize((224, 224)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) #mean, std
     ]),
-    'val': transforms.Compose([
-        transforms.Resize((224, 224)),
-        # transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
     'test' : transforms.Compose([
-        transforms.Resize(224),
+        transforms.Resize((224, 224)),
         transforms.ToTensor(),
     ])
 }
@@ -41,7 +34,7 @@ NLABELS = 71
 
 batch_size = 176
 
-class_names = "red,orange,yellow,yellow_green,green,sky,blue,purple,navy,pink,black,khaki,gray,white,brown,dark_beige,beige,casual,dandy,formal/office,lovely,luxury,modern,purity,sexy,sporty,street,vintage,All,spring/fall,summer,winter,blazer,blouse_long,blouse_short,cardigan,coach_jacket,coat,dress,dress_shirt_long,dress_shirt_short,flat_shoes,fleece_jacket,hightop,hill,hoody,hoody_jacket,jean,jogger,jumper,leather_jacket,leggings,loafer,long_boots,long_padding,mtm,running_shoes,sandal,short_boots,short_padding,skirt,slacks,sleeveless,sneakers,sweater,top_others,trench_coat,tshirt_long,tshirt_short,vest,walker".split(',')
+class_names = "red,orange,yellow,lime,green,sky,blue,purple,navy,pink,black,khaki,gray,white,brown,dark_beige,beige,casual,dandy,formal/office,lovely,luxury,modern,purity,sexy,sporty,street,vintage,All,spring/fall,summer,winter,blazer,blouse_long,blouse_short,cardigan,coach_jacket,coat,dress,dress_shirt_long,dress_shirt_short,flat_shoes,fleece_jacket,hightop,heel,hoody,hoody_jacket,jean,jogger,jumper,leather_jacket,leggings,loafer,long_boots,long_padding,mtm,running_shoes,sandal,short_boots,short_padding,skirt,slacks,sleeveless,sneakers,sweater,top_others,trench_coat,tshirt_long,tshirt_short,vest,walker".split(',')
 
 class_color = class_names[:17]
 class_style = class_names[17:28]
@@ -50,26 +43,26 @@ class_category = class_names[32:]
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-DATA_PATH = './dataset/c_dataset_v2.1/images_v2.1_split/'
+DATA_PATH = '/content/drive/My Drive/Colab Notebooks/images/images_v2.3/'
 IMG_FILE = '_img.txt'
 LABEL_FILE = '_label.txt'
-phases = ['train', 'val', 'test']
+phases = ['train', 'test']
 
-def convert_to_txt():
-    # Convert to one-hot text file from csv file
-    for i in range(len(phases)):
-      data_csv = pd.read_csv(DATA_PATH+phases[i]+"_col4.csv")
-      data_csv['image_file_name'].to_csv(DATA_PATH+phases[i]+IMG_FILE, index=False)
-      labels = pd.get_dummies(data_csv.iloc[:,1:])
-      labels.to_csv(DATA_PATH+phases[i]+LABEL_FILE, header=False, index=False, sep=' ')
-      labels = np.loadtxt(DATA_PATH+phases[i]+LABEL_FILE, dtype=np.int64)
-      label1 = np.nonzero(labels[:,:17])[1]
-      label2 = np.nonzero(labels[:,17:28])[1]
-      label3 = np.nonzero(labels[:,28:32])[1]
-      label4 = np.nonzero(labels[:,32:])[1]
-      labels = np.column_stack([label1,label2,label3,label4])
-      labels = pd.DataFrame(labels)
-      labels.to_csv(DATA_PATH+phases[i]+LABEL_FILE, header=False, index=False, sep=' ')
+
+# Convert to one-hot text file from csv file
+for i in range(len(phases)):
+  data_csv = pd.read_csv(DATA_PATH+phases[i]+".csv")
+  data_csv['image_file_name'].to_csv(DATA_PATH+phases[i]+IMG_FILE, index=False)
+  labels = pd.get_dummies(data_csv.iloc[:,1:])
+  labels.to_csv(DATA_PATH+phases[i]+LABEL_FILE, header=False, index=False, sep=' ')
+  labels = np.loadtxt(DATA_PATH+phases[i]+LABEL_FILE, dtype=np.int64)
+  label1 = np.nonzero(labels[:,:17])[1]
+  label2 = np.nonzero(labels[:,17:28])[1]
+  label3 = np.nonzero(labels[:,28:32])[1]
+  label4 = np.nonzero(labels[:,32:])[1]
+  labels = np.column_stack([label1,label2,label3,label4])
+  labels = pd.DataFrame(labels)
+  labels.to_csv(DATA_PATH+phases[i]+LABEL_FILE, header=False, index=False, sep=' ')
 
 # Processing Custom Dataset
 class DatasetProcessing(Dataset):
@@ -104,18 +97,16 @@ class DatasetProcessing(Dataset):
 
 
 dset_train = DatasetProcessing(DATA_PATH, phases[0], phases[0]+IMG_FILE, phases[0]+LABEL_FILE, data_transforms[phases[0]])
-dset_val = DatasetProcessing(DATA_PATH, phases[1], phases[1]+IMG_FILE, phases[1]+LABEL_FILE,  data_transforms[phases[1]])
-dset_test = DatasetProcessing(DATA_PATH, phases[2], phases[2]+IMG_FILE, phases[2]+LABEL_FILE, data_transforms[phases[2]])
+dset_test = DatasetProcessing(DATA_PATH, phases[1], phases[1]+IMG_FILE, phases[1]+LABEL_FILE,  data_transforms[phases[1]])
 
 train_loader = DataLoader(dset_train, batch_size=batch_size, shuffle=True, num_workers=0)
-val_loader = DataLoader(dset_val, batch_size=batch_size, shuffle=False, num_workers=0)
 test_loader = DataLoader(dset_test, batch_size=batch_size, shuffle=False, num_workers=0)
 
-dataloaders = {'train': train_loader, 'val': val_loader, 'test': test_loader}
-dataset_sizes = {'train': len(dset_train), 'val': len(dset_val), 'test': len(dset_test)}
+dataloaders = {'train': train_loader, 'test': test_loader}
+dataset_sizes = {'train': len(dset_train), 'test': len(dset_test)}
 
 
-# Show Samples
+'''# Show Samples
 def imshow(img):
   img = img.numpy().transpose((1, 2, 0))
   mean = np.array([0.485, 0.456, 0.406])
@@ -123,15 +114,14 @@ def imshow(img):
   img = std * img + mean # unnormalize
   img = np.clip(img, 0, 1)
   plt.imshow(img)
-'''
+
 images, label1, label2, label3, label4 = next(iter(dataloaders['train'])) # get batch data from train set
 imshow(torchvision.utils.make_grid(images)) # show sample images
 
 for i in range(batch_size): # and print sample labels
   print("sample line %d" % (i+1), class_color[label1[i]], class_style[label2[i]], class_season[label3[i]], class_category[label4[i]])
 
-plt.show()
-'''
+plt.show()'''
 
 from torchvision.models.mobilenet import mobilenet_v2
 import torch.nn as nn
@@ -146,19 +136,15 @@ class Model(nn.Module):
         self.feature = base.features
         self.classification_1 = nn.Sequential(
             nn.Linear(1280 * 7 * 7, 17)
-            # nn.Softmax()
         )
         self.classification_2 = nn.Sequential(
             nn.Linear(1280 * 7 * 7, 11)
-            # nn.Softmax()
         )
         self.classification_3 = nn.Sequential(
             nn.Linear(1280 * 7 * 7, 4)
-            # nn.Softmax()
         )
         self.classification_4 = nn.Sequential(
             nn.Linear(1280 * 7 * 7, 39)
-            # nn.Softmax()
         )
 
     def forward(self, x):
@@ -169,8 +155,7 @@ class Model(nn.Module):
         out2 = self.classification_2(x)
         out3 = self.classification_3(x)
         out4 = self.classification_4(x)
-        print("forward:", out1.data.cpu().numpy().argmax(), out2.data.cpu().numpy().argmax(),
-              out3.data.cpu().numpy().argmax(), out4.data.cpu().numpy().argmax())
+        print("forward:", out1.data.cpu().numpy().argmax(), out2.data.cpu().numpy().argmax(), out3.data.cpu().numpy().argmax(), out4.data.cpu().numpy().argmax())
 
         return out1, out2, out3, out4
 
@@ -186,8 +171,6 @@ def view_losses():
     plt.subplot(121)
     plt.title("loss color")
     plt.plot(losses_avg, 'g', losses1, 'b')
-    # plt.title("loss avg")
-    # plt.plot(losses_avg, 'g')
     plt.subplot(122)
     plt.title("loss style")
     plt.plot(losses_avg, 'g', losses2, 'b')
@@ -202,7 +185,7 @@ def view_losses():
 
 
 # model train with three classifier
-def train_model(model, criterion, scheduler, optimizer, num_epochs=25):
+def train_model(model, criterion, scheduler, optimizer, num_epochs=20):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -212,7 +195,7 @@ def train_model(model, criterion, scheduler, optimizer, num_epochs=25):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
-        for phase in ['train', 'val']:
+        for phase in ['train', 'test']:
             if phase == 'train':
                 scheduler.step()
                 model.train()
@@ -242,10 +225,10 @@ def train_model(model, criterion, scheduler, optimizer, num_epochs=25):
                 label4 = label4.to(device)
                 result1, result2, result3, result4 = model(inputs)
 
-                _, preds1 = torch.max(result1, 1)
-                _, preds2 = torch.max(result2, 1)
-                _, preds3 = torch.max(result3, 1)
-                _, preds4 = torch.max(result4, 1)
+                _, preds1 = result1.max(1)
+                _, preds2 = result2.max(1)
+                _, preds3 = result3.max(1)
+                _, preds4 = result4.max(1)
 
                 loss1 = criterion(result1, label1)
                 loss2 = criterion(result2, label2)
@@ -277,12 +260,12 @@ def train_model(model, criterion, scheduler, optimizer, num_epochs=25):
             losses3.append(running_loss3)
             losses4.append(running_loss4)
             print('{} Loss Avg: {:.4f} Acc Avg: {:.4f}'.format(phase, epoch_loss, epoch_acc))
-            print("[each accs] 1:", running_corrects1.double() / dataset_sizes[phase], "/ 2:",
-                  running_corrects2.double() / dataset_sizes[phase], "/ 3:",
-                  running_corrects3.double() / dataset_sizes[phase], "/ 4:",
-                  running_corrects4.double() / dataset_sizes[phase])
+            print("[each accs] 1:", running_corrects1.double() / dataset_sizes[phase],
+                  "/ 2:", running_corrects2.double() / dataset_sizes[phase],
+                  "/ 3:", running_corrects3.double() / dataset_sizes[phase],
+                  "/ 4:", running_corrects4.double() / dataset_sizes[phase])
 
-            if phase == 'val' and epoch_acc > best_acc:
+            if phase == 'test' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
 
@@ -300,24 +283,23 @@ def train_model(model, criterion, scheduler, optimizer, num_epochs=25):
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-    print('Best val Acc: {:4f}'.format(best_acc))
+    print('Best test Acc: {:4f}'.format(best_acc))
     view_losses()
 
     return model
 
 
 model = Model()
-model.cuda()
 
-optim = Adam(model.parameters(), lr=0.05)
+optim = Adam(model.parameters(), lr=0.0001)
 criterion = nn.CrossEntropyLoss()
-exp_lr_scheduler = lr_scheduler.StepLR(optim, step_size=5, gamma=0.1)
+exp_lr_scheduler = lr_scheduler.StepLR(optim, step_size=5, gamma=0.5)
 
-num_epoch = 25
+num_epoch = 20
 
 model = train_model(model, criterion, exp_lr_scheduler, optim, num_epochs=num_epoch)
 
-'''
+
 # Testing samples
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = Model()
@@ -325,7 +307,7 @@ model.load_state_dict(torch.load(DATA_PATH+"model-" + str(num_epoch-1) + ".pth")
 # model.load_state_dict(torch.load(DATA_PATH+"model-19.pth"))
 
 def get_random_images(num):
-    data = dset_train
+    data = dset_test
     indices = list(range(len(data)))
     np.random.shuffle(indices)
     idx = indices[:num]
@@ -347,11 +329,6 @@ def predict_image(image):
     index2 = output2.data.cpu().numpy().argmax()
     index3 = output3.data.cpu().numpy().argmax()
     index4 = output4.data.cpu().numpy().argmax()
-    # print("output1:",type(output1))
-    # print("output2:",type(output2))
-    # print("output3:",type(output3))
-    # print("outputs:",output1,output2,output3)
-    # print("indexes:",index1,index2,index3)
     return index1, index2, index3, index4
 
 # Get the random image sample, predict them and display the results
@@ -362,12 +339,9 @@ for ii in range(len(images)):
     image = to_pil(images[ii])
     index1, index2, index3, index4 = predict_image(image)
     sub = fig.add_subplot(1, len(images), ii+1)
-    # res = int(labels[ii]) == index
-    print("test line %d:" % (ii),"(",index1, index2, index3, index4,")",class_names[index1], class_names[index2+17], class_names[index3+28], class_names[index4+34])
+    print("test line %d:" % (ii),"(",index1, index2, index3, index4,")",class_names[index1], class_names[index2+17], class_names[index3+28], class_names[index4+32])
     plt.axis('off')
 
     plt.imshow(image)
 plt.show()
 
-
-'''
